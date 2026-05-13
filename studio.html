@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Dreamora Studio | Professional Designer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        body { background: #020617; color: white; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; margin: 0; }
+        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        
+        /* Item Cards */
+        .item-card { cursor: pointer; transition: 0.2s; border: 2px solid transparent; background: rgba(255,255,255,0.03); border-radius: 15px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 800; text-transform: uppercase; text-align: center; padding: 5px; line-height: 1.2; }
+        .item-card:hover { background: rgba(255,255,255,0.08); }
+        .item-card.active { border-color: #3b82f6; background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        
+        /* Nav Buttons */
+        .cat-btn { font-size: 20px; opacity: 0.4; transition: 0.3s; padding: 12px; border-radius: 15px; background: none; border: none; cursor: pointer; color: white; }
+        .cat-btn.active { opacity: 1; background: rgba(59, 130, 246, 0.1); color: #3b82f6; transform: scale(1.1); }
+        
+        #char-svg { height: 80vh; filter: drop-shadow(0 20px 50px rgba(0,0,0,0.6)); }
+        input[type="color"] { border: none; width: 45px; height: 45px; cursor: pointer; background: none; }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <header class="p-6 flex justify-between items-center z-50 border-b border-white/5 bg-[#020617]">
+        <button id="btnBack" class="glass px-6 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-white/5 transition">Zurück</button>
+        <div class="text-xl font-black italic tracking-tighter">DREAMORA <span class="text-blue-500">STUDIO</span></div>
+        <button id="saveBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-2xl font-black uppercase text-xs shadow-xl transition-all active:scale-95">Speichern</button>
+    </header>
+
+    <div class="flex-grow flex flex-col md:flex-row overflow-hidden p-6 gap-6">
+        
+        <!-- PREVIEW -->
+        <div class="flex-grow glass rounded-[3rem] flex items-center justify-center relative bg-gradient-to-b from-slate-900 to-black overflow-hidden border-white/5">
+            <svg id="char-svg" viewBox="0 0 200 500" xmlns="http://www.w3.org/2000/svg">
+                <!-- Basis Körper (Haut) -->
+                <g id="skin-group">
+                    <path id="skin-body" d="M75,180 Q100,170 125,180 L125,330 Q100,340 75,330 Z" fill="#ffdbac"/>
+                    <circle id="skin-head" cx="100" cy="130" r="42" fill="#ffdbac"/>
+                    <rect id="arm-l" x="55" y="185" width="18" height="120" rx="9" fill="#ffdbac" />
+                    <rect id="arm-r" x="127" y="185" width="18" height="120" rx="9" fill="#ffdbac" />
+                    <rect id="leg-l-skin" x="78" y="330" width="20" height="140" fill="#ffdbac" />
+                    <rect id="leg-r-skin" x="102" y="330" width="20" height="140" fill="#ffdbac" />
+                </g>
+
+                <!-- Kleidung & Details -->
+                <g id="group-bottom"><path id="mesh-bottom" d="" fill="#474747"/></g>
+                <g id="group-top"><path id="mesh-top" d="" fill="#111111"/></g>
+
+                <!-- Gesicht -->
+                <g id="mesh-eyes"></g>
+                <g id="mesh-mouth"></g>
+
+                <!-- Haare & Accessoires -->
+                <path id="mesh-hair" d="" fill="#222"/>
+                <g id="mesh-access"></g>
+            </svg>
+
+            <!-- Color Picker -->
+            <div class="absolute bottom-10 glass p-3 rounded-full flex items-center gap-4 border-white/10">
+                <input type="color" id="universalColor" value="#3b82f6">
+                <span id="colorLabel" class="text-[9px] font-black uppercase opacity-50 pr-4 italic">Farbe: Haare</span>
+            </div>
+        </div>
+
+        <!-- MENU -->
+        <aside class="w-full md:w-[480px] glass rounded-[2.5rem] flex flex-col overflow-hidden border-white/10">
+            <div class="flex flex-wrap justify-around p-4 border-b border-white/5 bg-white/5">
+                <button id="nav-hair" class="cat-btn active">💇</button>
+                <button id="nav-eyes" class="cat-btn">👁️</button>
+                <button id="nav-mouth" class="cat-btn">👄</button>
+                <button id="nav-top" class="cat-btn">👕</button>
+                <button id="nav-bottom" class="cat-btn">👖</button>
+                <button id="nav-access" class="cat-btn">🎧</button>
+                <button id="nav-skin" class="cat-btn">👤</button>
+            </div>
+            <div class="flex-grow overflow-y-auto p-6">
+                <div id="itemGrid" class="grid grid-cols-3 gap-3"></div>
+            </div>
+        </aside>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-UJZGKUGRJW-8VywkoZLxd5QNUQNB1fw",
+            authDomain: "dreamora-e379a.firebaseapp.com",
+            projectId: "dreamora-e379a",
+            storageBucket: "dreamora-e379a.appspot.com",
+            messagingSenderId: "1016342666502",
+            appId: "1:1016342666502:web:8410d27cc926916f0e1287"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const $ = (id) => document.getElementById(id);
+        let currentTab = 'hair';
+        let config = { hair:0, eyes:0, mouth:0, top:0, bottom:0, access:0, skin:0,
+                        hairCol:'#222222', topCol:'#111111', bottomCol:'#474747', skinCol:'#ffdbac', accessCol:'#ffffff' };
+
+        const shapes = {
+            hair: [
+                "M60,115 Q100,50 140,115 L135,125 Q100,90 65,125 Z", // Buzz
+                "M55,130 A45,45 0 1,1 145,130 Q100,115 55,130", // Afro
+                "M60,120 Q60,70 100,70 Q140,70 140,120 L135,130 Q100,105 65,130 Z", // Classic
+                "M60,120 Q60,60 100,60 Q140,60 140,150 L130,150 Q130,90 70,120 Z", // Side Part
+                "M70,80 Q100,50 130,80 L130,130 L70,130 Z", // Top Knot
+                "M55,125 Q100,50 145,125 L135,135 Q100,100 65,135 Z", // Messy
+                "M65,100 H135 V125 Q100,110 65,125 Z", // Flat Top
+                "M80,85 Q100,30 120,85 L120,130 H80 Z", // Mohawk
+                "M50,130 Q50,40 150,40 L150,180 Q140,60 60,130 Z", // Emo
+                "" // Bald
+            ],
+            eyes: [
+                "<circle cx='88' cy='125' r='3.5' fill='black'/><circle cx='112' cy='125' r='3.5' fill='black'/>",
+                "<circle cx='88' cy='125' r='5' fill='black'/><circle cx='112' cy='125' r='5' fill='black'/>",
+                "<path d='M82,125 Q88,118 94,125 M106,125 Q112,118 118,125' stroke='black' fill='none' stroke-width='2'/>",
+                "<rect x='84' y='123' width='8' height='4'/><rect x='108' y='123' width='8' height='4'/>",
+                "<path d='M83,122 L93,128 M83,128 L93,122 M107,122 L117,128 M107,128 L117,122' stroke='black' stroke-width='2'/>",
+                "<circle cx='88' cy='125' r='4' stroke='black' fill='none'/><circle cx='112' cy='125' r='4' stroke='black' fill='none'/>",
+                "<path d='M85,120 Q88,130 91,120 M109,120 Q112,130 115,120' stroke='black' fill='none'/>",
+                "<circle cx='88' cy='125' r='4' fill='white' stroke='black'/><circle cx='112' cy='125' r='4' fill='white' stroke='black'/>",
+                "<rect x='85' y='125' width='10' height='1'/><rect x='105' y='125' width='10' height='1'/>",
+                "<circle cx='88' cy='125' r='2' fill='black'/><circle cx='112' cy='125' r='2' fill='black'/>"
+            ],
+            mouth: [
+                "<path d='M92,148 Q100,156 108,148' stroke='black' fill='none' stroke-width='2'/>", // Smile
+                "<path d='M92,152 Q100,146 108,152' stroke='black' fill='none' stroke-width='2'/>", // Sad
+                "<rect x='93' y='150' width='14' height='2' rx='1' fill='black'/>", // Neutral
+                "<circle cx='100' cy='152' r='4' fill='black'/>", // Oh
+                "<path d='M90,150 H110' stroke='black' stroke-width='1'/>", // Line
+                "<path d='M92,148 L108,148' stroke='black' stroke-width='3'/>",
+                "<circle cx='100' cy='152' r='2' fill='black'/>",
+                "<path d='M95,148 Q100,152 105,148' stroke='black' fill='none'/>",
+                "<path d='M92,148 Q95,155 100,150 Q105,155 108,148' stroke='black' fill='none'/>",
+                "<path d='M96,152 Q100,154 104,152' stroke='black' fill='none'/>"
+            ],
+            top: [
+                "M70,180 H130 V330 H70 Z", // Normal T-Shirt
+                "M65,175 H135 V340 H65 Z", // Hoodie
+                "M68,175 H132 V335 H68 Z", // Sweater
+                "M70,180 H130 V330 H70 Z M98,180 V330", // Jacket Zipper
+                "M82,180 H118 V330 H82 Z", // Tank Top
+                "M70,180 H130 V330 H70 Z M52,185 H70 V330 H52 Z M130,185 H148 V330 H130 Z", // Longsleeve
+                "M70,180 H130 V250 H70 Z", // Crop Top Short (BAUCHFREI NEU)
+                "M70,180 H130 V250 H70 Z M52,185 H70 V300 H52 Z M130,185 H148 V300 H130 Z", // Crop Top Long (BAUCHFREI NEU)
+                "M60,180 H140 V320 H60 Z", // XL Boxy
+                "M70,180 L130,180 L115,330 H85 Z" // V-Neck Slim
+            ],
+            bottom: [
+                "M78,330 H98 V475 H78 Z M102,330 H122 V475 H102 Z", // Straight
+                "M78,330 Q65,400 78,475 H98 Q110,400 98,330 Z M102,330 Q90,400 102,475 H122 Q135,400 122,330 Z", // Baggy Wavy (DETAILED)
+                "M78,330 H98 V400 H78 Z M102,330 H122 V400 H102 Z", // Shorts
+                "M78,330 H100 V430 H78 Z M100,330 H122 V430 H100 Z", // Cargo
+                "M75,330 H125 V420 Q100,440 75,420 Z", // Skirt
+                "M80,330 L73,475 H98 V330 Z M102,330 L127,475 H102 V330 Z", // Flare
+                "M81,330 H95 V475 H81 Z M105,330 H119 V475 H105 Z", // Skinny
+                "M78,330 H98 V450 H78 Z M102,330 H122 V450 H102 Z", // 7/8
+                "M75,330 Q90,470 98,470 V330 Z M125,330 Q110,470 102,470 V330 Z", // Jogger
+                "M78,330 Q70,350 78,410 H98 V330 Z M102,330 Q110,350 102,410 H122 V330 Z" // Boxers
+            ],
+            access: [
+                "", // None
+                "<rect x='78' y='120' width='20' height='14' rx='2' fill='black'/><rect x='102' y='120' width='20' height='14' rx='2' fill='black'/><path d='M98,127 H102' stroke='black' stroke-width='4'/>", // Opaque Sunglasses
+                "<path d='M90,175 Q100,195 110,175' stroke='silver' fill='none' stroke-width='2'/>", // Chain
+                "<circle cx='68' cy='130' r='10' fill='black'/><circle cx='132' cy='130' r='10' fill='black'/><path d='M68,120 Q100,110 132,120' fill='none' stroke='black' stroke-width='3'/>", // Headphones
+                "<path d='M75,130 H125 L135,145 H65 Z' fill='black' opacity='0.8'/>", // Mask
+                "<circle cx='100' cy='110' r='5' fill='gold'/>", // Bindi
+                "<rect x='80' y='122' width='40' height='12' rx='2' stroke='black' fill='rgba(0,0,0,0.1)'/>", // Blue Light Glasses
+                "<path d='M85,100 L115,100 L100,80 Z' fill='red'/>", // Party Hat
+                "<path d='M80,185 Q100,200 120,185' stroke='gold' stroke-width='3' fill='none'/>", // Scarf
+                "<rect x='90' y='80' width='20' height='2' fill='white'/>" // Bandage
+            ]
+        };
+
+        function updatePreview() {
+            $('mesh-hair').setAttribute('d', shapes.hair[config.hair] || "");
+            $('mesh-hair').setAttribute('fill', config.hairCol);
+            
+            // Top Layers (Details like Zippers)
+            let topHTML = `<path d="${shapes.top[config.top]}" fill="${config.topCol}"/>`;
+            if(config.top === 1) topHTML += `<path d="M100,175 V210" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/><path d="M85,280 H115" stroke="rgba(255,255,255,0.1)"/>`; // Hoodie details
+            if(config.top === 3) topHTML += `<path d="M100,180 V330" stroke="white" stroke-width="1" opacity="0.3" stroke-dasharray="2,2"/>`; // Zipper
+            $('group-top').innerHTML = topHTML;
+
+            // Sleeve color logic
+            const sleeveCol = (config.top === 1 || config.top === 5 || config.top === 7) ? config.topCol : config.skinCol;
+            $('arm-l').setAttribute('fill', sleeveCol);
+            $('arm-r').setAttribute('fill', sleeveCol);
+
+            // Bottom Layers (Pockets)
+            let botHTML = `<path d="${shapes.bottom[config.bottom]}" fill="${config.bottomCol}"/>`;
+            botHTML += `<path d="M85,340 V355 M115,340 V355" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>`; // Pockets
+            $('group-bottom').innerHTML = botHTML;
+
+            $('mesh-eyes').innerHTML = shapes.eyes[config.eyes] || shapes.eyes[0];
+            $('mesh-mouth').innerHTML = shapes.mouth[config.mouth] || shapes.mouth[0];
+            $('mesh-access').innerHTML = shapes.access[config.access] || "";
+
+            ['skin-body','skin-head','leg-l-skin','leg-r-skin'].forEach(id => $(id).setAttribute('fill', config.skinCol));
+        }
+
+        window.setTab = (t) => {
+            currentTab = t;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            $('nav-'+t).classList.add('active');
+            $('colorLabel').innerText = "Farbe: " + t.toUpperCase();
+            
+            const grid = $('itemGrid'); grid.innerHTML = '';
+            const list = shapes[t] || Array(10).fill("");
+            list.forEach((_, i) => {
+                if(t === 'skin' && i > 4) return;
+                const card = document.createElement('div');
+                card.className = `item-card ${config[t] === i ? 'active' : ''}`;
+                card.innerText = (t === 'top' && i === 6) ? "Crop Top Short" : (t === 'top' && i === 7) ? "Crop Top Long" : `${t} ${i+1}`;
+                card.onclick = () => { config[t] = i; updatePreview(); window.setTab(t); };
+                grid.appendChild(card);
+            });
+        };
+
+        $('universalColor').oninput = (e) => {
+            config[currentTab+'Col'] = e.target.value;
+            updatePreview();
+        };
+
+        $('btnBack').onclick = () => location.href = 'index.html';
+        
+        $('saveBtn').onclick = async () => {
+            const svgData = new XMLSerializer().serializeToString($('char-svg'));
+            const base64 = "data:image/svg+xml;base64," + btoa(svgData);
+            if(auth.currentUser) {
+                await setDoc(doc(db, "users", auth.currentUser.uid), { avatar2d: base64 }, { merge: true });
+                window.location.href = "index.html";
+            } else {
+                alert("Bitte logge dich erst ein!");
+            }
+        };
+
+        // Fix Navigation
+        ['hair','eyes','mouth','top','bottom','access','skin'].forEach(t => {
+            $(`nav-${t}`).onclick = () => window.setTab(t);
+        });
+
+        window.setTab('hair');
+        updatePreview();
+    </script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Dreamora | Ultimate Social Space</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        :root { --bg: #020617; --accent: #3b82f6; --text: #f8fafc; }
+        .light-theme { --bg: #f1f5f9; --accent: #2563eb; --text: #0f172a; }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.3s ease; margin: 0; overflow-x: hidden; }
+        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .modal-hidden { display: none !important; }
+        .hidden { display: none !important; }
+        .verified-badge { display: none; color: #3b82f6; }
+        .show-verified { display: inline-block !important; }
+        .chat-me { background: var(--accent); color: white; border-radius: 20px 20px 4px 20px; align-self: flex-end; padding: 12px; }
+        .chat-them { background: #1e293b; color: white; border-radius: 20px 20px 20px 4px; align-self: flex-start; padding: 12px; }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="fixed w-full z-[100] p-6">
+        <div class="max-w-7xl mx-auto glass rounded-[2.5rem] px-8 py-4 flex justify-between items-center shadow-2xl">
+            <div class="flex items-center gap-10">
+                <div class="text-3xl font-black text-blue-500 italic tracking-tighter cursor-pointer select-none" onclick="location.reload()">DREAMORA</div>
+                <button id="navCommunityBtn" class="hidden text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition">Community</button>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="profileSection" class="hidden relative">
+                    <button id="profileBtn" class="flex items-center gap-3 p-1.5 pr-6 glass rounded-full hover:bg-white/5 transition border-white/10 border">
+                        <img id="navAvatar" src="" class="w-10 h-10 rounded-full border-2 border-blue-500 object-cover bg-slate-800">
+                        <div class="flex items-center gap-2">
+                            <span id="userNameNav" class="text-sm font-black uppercase tracking-tight">User</span>
+                            <div class="verified-badge"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path></svg></div>
+                        </div>
+                    </button>
+                    <div id="profileDropdown" class="hidden absolute right-0 mt-5 w-60 glass rounded-[2.5rem] py-5 shadow-2xl border-white/10 text-center overflow-hidden">
+                        <button id="dropSettingsBtn" class="w-full text-left px-8 py-3 text-[11px] font-black hover:bg-white/5 transition italic uppercase">⚙️ Settings</button>
+                        <button id="logoutBtn" class="w-full text-left px-8 py-3 text-[11px] font-black text-red-500 hover:bg-red-500/10 transition border-t border-white/5 mt-3 uppercase">Logout</button>
+                    </div>
+                </div>
+                <button id="navLoginBtn" class="bg-blue-600 text-white px-10 py-3.5 rounded-2xl font-black text-xs uppercase shadow-lg">Login</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- AUTH MODAL -->
+    <div id="authModal" class="modal-hidden fixed inset-0 z-[300] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-4">
+        <div class="glass w-full max-w-md p-10 rounded-[3.5rem] shadow-2xl text-center relative border-white/10">
+            <h2 id="modalTitle" class="text-4xl font-black mb-1 italic text-blue-500 uppercase">Dreamora</h2>
+            <div class="grid grid-cols-2 gap-3 mb-6 mt-8">
+                <button id="btnGoogleAuth" class="flex items-center justify-center gap-2 bg-white text-black font-black py-4 rounded-xl hover:bg-slate-200 transition text-[10px] uppercase shadow-lg">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4"> Google
+                </button>
+                <button id="btnAppleAuth" class="flex items-center justify-center gap-2 bg-black text-white font-black py-4 rounded-xl border border-white/10 transition text-[10px] uppercase shadow-lg">Apple</button>
+            </div>
+            <div class="space-y-4">
+                <input type="email" id="authEmail" placeholder="E-Mail" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none text-center focus:border-blue-500 transition text-white">
+                <input type="password" id="authPass" placeholder="Passwort" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none text-center focus:border-blue-500 transition text-white">
+                <p id="authErrorMsg" class="text-red-500 text-[10px] font-black uppercase h-4"></p>
+                <button id="btnAuthAction" class="w-full bg-blue-600 py-4 rounded-2xl font-black tracking-widest hover:bg-blue-500 transition shadow-xl uppercase text-xs">Bestätigen</button>
+                <div class="flex justify-between px-2">
+                    <button id="switchAuthMode" class="text-[10px] font-black text-blue-400 uppercase">Registrieren</button>
+                    <button id="btnForgot" class="text-[10px] font-black text-slate-500 uppercase">Passwort vergessen?</button>
+                </div>
+            </div>
+            <button id="closeAuth" class="block w-full mt-10 text-[9px] text-slate-700 font-black uppercase tracking-[0.5em]">Schließen</button>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settingsModal" class="modal-hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+        <div class="glass w-full max-w-4xl h-[80vh] rounded-[3rem] shadow-2xl flex flex-col md:flex-row overflow-hidden border-white/10">
+            <div class="w-full md:w-64 border-r border-white/10 p-8 bg-white/5 flex flex-col">
+                <h2 class="text-2xl font-black mb-8 italic uppercase text-blue-500">Settings</h2>
+                <nav class="space-y-2 flex-grow">
+                    <button id="tabBtnProfile" class="w-full text-left px-4 py-3 rounded-xl bg-blue-600/20 font-black text-[10px] uppercase">Profil</button>
+                    <button id="tabBtnAppearance" class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 font-black text-[10px] uppercase">Design</button>
+                    <button id="tabBtnSecurity" class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 font-black text-[10px] uppercase">Konto</button>
+                </nav>
+                <button id="closeSettings" class="mt-8 w-full bg-white/10 py-3 rounded-2xl text-[10px] font-black uppercase">Fertig</button>
+            </div>
+            <div class="flex-grow p-10 overflow-y-auto">
+                <div id="tab-profile" class="tab-content text-center">
+                    <img id="settingsAvatarImg" class="w-40 h-40 mx-auto rounded-full border-4 border-blue-500 mb-6 bg-slate-900 object-cover shadow-2xl">
+                    <button onclick="location.href='studio.html'" class="bg-blue-600 px-8 py-3 rounded-2xl font-black text-xs uppercase shadow-lg shadow-blue-500/20">Studio Öffnen</button>
+                </div>
+                <div id="tab-appearance" class="tab-content hidden">
+                    <button id="themeToggle" class="w-full p-6 glass rounded-3xl flex justify-between items-center cursor-pointer hover:border-blue-500 transition">
+                        <span class="font-black text-xs uppercase">Hell / Dunkel Modus</span>
+                        <div class="w-12 h-6 bg-slate-700 rounded-full relative"><div id="themeDot" class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all"></div></div>
+                    </button>
+                </div>
+                <div id="tab-security" class="tab-content hidden">
+                    <label class="text-[10px] font-black uppercase opacity-40 ml-2">Name ändern</label>
+                    <div class="flex gap-2 mt-2">
+                        <input type="text" id="changeNameInput" placeholder="Neuer Name" class="flex-grow bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none text-white focus:border-blue-500">
+                        <button id="btnUpdateName" class="bg-blue-600 px-8 rounded-2xl font-black text-xs uppercase shadow-lg">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SOCIAL MODAL -->
+    <div id="socialModal" class="modal-hidden fixed inset-0 z-[140] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+        <div class="glass w-full max-w-6xl h-[85vh] rounded-[3.5rem] flex flex-col md:flex-row overflow-hidden shadow-2xl border-white/10">
+            <div class="w-full md:w-80 border-r border-white/10 bg-white/5 flex flex-col">
+                <div class="p-8">
+                    <h2 class="text-2xl font-black italic mb-4 uppercase text-blue-500">Community</h2>
+                    <input type="text" id="searchUserField" placeholder="Suche..." class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none text-sm">
+                </div>
+                <div id="friendsList" class="flex-grow overflow-y-auto px-6 space-y-2"></div>
+                <button id="closeSocial" class="p-8 text-[10px] font-black uppercase text-slate-500 hover:text-white transition">Schließen</button>
+            </div>
+            <div id="chatArea" class="flex-grow flex flex-col hidden bg-black/20">
+                <div class="p-6 border-b border-white/10 flex items-center gap-4 bg-white/5">
+                    <img id="chatPartnerAvatar" src="" class="w-12 h-12 rounded-full border-2 border-blue-500 object-cover bg-slate-900 shadow-lg">
+                    <p id="chatPartnerName" class="font-black italic uppercase text-sm"></p>
+                </div>
+                <div id="chatMessages" class="flex-grow overflow-y-auto p-8 space-y-4 flex flex-col"></div>
+                <div class="p-6 glass flex gap-4">
+                    <input type="text" id="msgInput" placeholder="Nachricht..." class="flex-grow bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none text-white focus:border-blue-500">
+                    <button id="sendMsgBtn" class="bg-blue-600 px-8 py-4 rounded-2xl font-black text-xs hover:scale-105 transition">SEND</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="h-screen flex flex-col items-center justify-center text-center">
+        <h1 class="text-7xl md:text-[11rem] font-black tracking-tighter italic uppercase leading-none">Dream <span class="text-blue-500">Social.</span></h1>
+        <div id="mainAvatarBox" class="hidden mt-10 pop-in">
+             <img id="mainHeroAvatar" class="w-72 h-72 mx-auto drop-shadow-[0_0_50px_rgba(59,130,246,0.5)] object-contain">
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, OAuthProvider, signInWithPopup, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, orderBy, addDoc, onSnapshot, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-UJZGKUGRJW-8VywkoZLxd5QNUQNB1fw",
+            authDomain: "dreamora-e379a.firebaseapp.com",
+            projectId: "dreamora-e379a",
+            storageBucket: "dreamora-e379a.appspot.com",
+            messagingSenderId: "1016342666502",
+            appId: "1:1016342666502:web:8410d27cc926916f0e1287"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const googleProvider = new GoogleAuthProvider();
+        const appleProvider = new OAuthProvider('apple.com');
+
+        const $ = (id) => document.getElementById(id);
+        const DEFAULT_AVATAR = "https://ui-avatars.com/api/?name=?&background=334155&color=fff";
+        let isLogin = true;
+        let activeChatId = null;
+        let chatUnsub = null;
+
+        // --- AUTH BEOBACHTER ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                $('navLoginBtn').classList.add('hidden');
+                $('profileSection').classList.remove('hidden');
+                $('navCommunityBtn').classList.remove('hidden');
+                $('userNameNav').innerText = (user.displayName || user.email.split('@')[0]).toUpperCase();
+                
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                const avatar = (userDoc.exists() && userDoc.data().avatar2d) ? userDoc.data().avatar2d : (user.photoURL || DEFAULT_AVATAR);
+                
+                $('navAvatar').src = avatar;
+                $('settingsAvatarImg').src = avatar;
+                $('mainHeroAvatar').src = avatar;
+                $('mainAvatarBox').classList.remove('hidden');
+
+                const isVIP = user.email.toLowerCase() === 'hellopey@web.de';
+                document.querySelectorAll('.verified-badge').forEach(b => b.classList.toggle('show-verified', isVIP));
+
+                await setDoc(doc(db, "users", user.uid), { uid: user.uid, name: user.displayName || user.email.split('@')[0], avatar, email: user.email }, { merge: true });
+            } else {
+                $('profileSection').classList.add('hidden');
+                $('navCommunityBtn').classList.add('hidden');
+                $('navLoginBtn').classList.remove('hidden');
+                $('mainAvatarBox').classList.add('hidden');
+            }
+        });
+
+        $('navLoginBtn').onclick = () => { isLogin = true; updateAuthUI(); $('authModal').classList.remove('modal-hidden'); };
+        $('closeAuth').onclick = () => $('authModal').classList.add('modal-hidden');
+        $('switchAuthMode').onclick = () => { isLogin = !isLogin; updateAuthUI(); };
+        
+        $('btnForgot').onclick = async () => {
+            const e = $('authEmail').value;
+            if(!e) return alert("E-Mail eingeben!");
+            await sendPasswordResetEmail(auth, e);
+            alert("Email gesendet!");
+        };
+
+        $('btnAuthAction').onclick = async () => {
+            const e = $('authEmail').value, p = $('authPass').value;
+            try {
+                if(isLogin) await signInWithEmailAndPassword(auth, e, p);
+                else await createUserWithEmailAndPassword(auth, e, p);
+                $('authModal').classList.add('modal-hidden');
+            } catch (err) { $('authErrorMsg').innerText = "Check deine Daten!"; }
+        };
+
+        $('btnGoogleAuth').onclick = async () => { try { await signInWithPopup(auth, googleProvider); $('authModal').classList.add('modal-hidden'); } catch(e){} };
+        $('btnAppleAuth').onclick = async () => { try { await signInWithPopup(auth, appleProvider); $('authModal').classList.add('modal-hidden'); } catch(e){} };
+        
+        $('profileBtn').onclick = (e) => { e.stopPropagation(); $('profileDropdown').classList.toggle('hidden'); };
+        window.onclick = () => $('profileDropdown').classList.add('hidden');
+        $('logoutBtn').onclick = () => signOut(auth);
+        $('dropSettingsBtn').onclick = () => $('settingsModal').classList.remove('modal-hidden');
+        $('closeSettings').onclick = () => $('settingsModal').classList.add('modal-hidden');
+
+        // Settings Tabs
+        $('tabBtnProfile').onclick = () => switchTab('profile');
+        $('tabBtnAppearance').onclick = () => switchTab('appearance');
+        $('tabBtnSecurity').onclick = () => switchTab('security');
+        function switchTab(t) {
+            ['profile', 'appearance', 'security'].forEach(id => {
+                $('tab-'+id).classList.add('hidden');
+                $('tabBtn'+id.charAt(0).toUpperCase()+id.slice(1)).classList.remove('bg-blue-600/20');
+            });
+            $('tab-'+t).classList.remove('hidden');
+            $('tabBtn'+t.charAt(0).toUpperCase()+t.slice(1)).classList.add('bg-blue-600/20');
+        }
+
+        $('themeToggle').onclick = () => {
+            document.body.classList.toggle('light-theme');
+            $('themeDot').style.left = document.body.classList.contains('light-theme') ? '28px' : '4px';
+        };
+
+        $('btnUpdateName').onclick = async () => {
+            const n = $('changeNameInput').value;
+            if(n) { await updateProfile(auth.currentUser, { displayName: n }); $('userNameNav').innerText = n.toUpperCase(); alert("Gespeichert!"); }
+        };
+
+        $('navCommunityBtn').onclick = () => { $('socialModal').classList.remove('modal-hidden'); loadFriends(); };
+        $('closeSocial').onclick = () => $('socialModal').classList.add('modal-hidden');
+
+        $('searchUserField').oninput = async (e) => {
+            const term = e.target.value.toLowerCase();
+            if(term.length < 2) return;
+            const snap = await getDocs(query(collection(db, "users"), limit(10)));
+            $('searchResults').innerHTML = "";
+            snap.forEach(d => {
+                const u = d.data();
+                if(u.uid !== auth.currentUser.uid && u.name.toLowerCase().includes(term)) {
+                    const row = document.createElement('div');
+                    row.className = "flex items-center justify-between p-3 glass rounded-xl mb-1";
+                    row.innerHTML = `<span class='font-bold uppercase text-[10px]'>${u.name}</span><button class='bg-blue-600 px-3 py-1 rounded-lg text-[9px]'>ADD</button>`;
+                    row.querySelector('button').onclick = async () => { await setDoc(doc(db, "friendships", `${auth.currentUser.uid}_${u.uid}`), { users: [auth.currentUser.uid, u.uid] }); loadFriends(); };
+                    $('searchResults').appendChild(row);
+                }
+            });
+        };
+
+        async function loadFriends() {
+            const q = query(collection(db, "friendships"), where("users", "array-contains", auth.currentUser.uid));
+            const snap = await getDocs(q);
+            $('friendsList').innerHTML = "";
+            snap.forEach(async (fDoc) => {
+                const otherId = fDoc.data().users.find(id => id !== auth.currentUser.uid);
+                const uSnap = await getDocs(query(collection(db, "users"), where("uid", "==", otherId)));
+                uSnap.forEach(u => {
+                    const ud = u.data();
+                    const btn = document.createElement('div');
+                    btn.className = "flex items-center gap-3 p-3 glass rounded-2xl cursor-pointer hover:bg-blue-600/10 mb-1 transition";
+                    btn.innerHTML = `<img src="${ud.avatar || DEFAULT_AVATAR}" class="w-8 h-8 rounded-full border border-blue-500 object-cover"> <span class="text-[10px] font-bold uppercase">${ud.name}</span>`;
+                    btn.onclick = () => {
+                        $('chatArea').classList.remove('hidden');
+                        $('chatPartnerName').innerText = ud.name;
+                        $('chatPartnerAvatar').src = ud.avatar || DEFAULT_AVATAR;
+                        activeChatId = [auth.currentUser.uid, ud.uid].sort().join('_');
+                        startChat();
+                    };
+                    $('friendsList').appendChild(btn);
+                });
+            });
+        }
+
+        function startChat() {
+            if(chatUnsub) chatUnsub();
+            const oneHourAgo = new Date(Date.now() - 3600000);
+            const q = query(collection(db, "chats", activeChatId, "messages"), where("timestamp", ">", oneHourAgo), orderBy("timestamp", "asc"));
+            chatUnsub = onSnapshot(q, (s) => {
+                $('chatMessages').innerHTML = "";
+                s.forEach(doc => {
+                    const m = doc.data();
+                    const isMe = m.sender === auth.currentUser.uid;
+                    $('chatMessages').innerHTML += `<div class="flex ${isMe ? 'justify-end' : 'justify-start'}"><div class="${isMe ? 'chat-me' : 'chat-them'} text-xs">${m.text}</div></div>`;
+                });
+                $('chatMessages').scrollTo(0, $('chatMessages').scrollHeight);
+            });
+        }
+
+        $('sendMsgBtn').onclick = async () => {
+            if(!$('msgInput').value) return;
+            await addDoc(collection(db, "chats", activeChatId, "messages"), { text: $('msgInput').value, sender: auth.currentUser.uid, timestamp: serverTimestamp() });
+            $('msgInput').value = "";
+        };
+
+        function updateAuthUI() { 
+            $('modalTitle').innerText = isLogin ? "DREAMORA" : "SIGN UP"; 
+            $('btnAuthAction').innerText = isLogin ? "LOGIN" : "REGISTER";
+            $('authErrorMsg').innerText = "";
+        }
+    </script>
+</body>
+</html>
