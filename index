@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <title>Dreamora | Home</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { background-color: #020617; color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; }
+        .glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .modal-hidden { display: none !important; }
+        .verified-badge { display: none; color: #3b82f6; }
+        .show-verified { display: inline-block !important; }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="fixed w-full z-50 p-6">
+        <div class="max-w-7xl mx-auto glass rounded-[2.5rem] px-8 py-4 flex justify-between items-center shadow-2xl">
+            <div class="text-2xl font-black text-blue-500 italic tracking-tighter">DREAMORA</div>
+            
+            <div class="flex items-center gap-4">
+                <div id="profileSection" class="hidden relative">
+                    <button id="profileBtn" class="flex items-center gap-3 p-1 pr-5 glass rounded-full hover:bg-white/10 transition border-white/10 border">
+                        <img id="navAvatar" src="" class="w-10 h-10 rounded-full border-2 border-blue-500 bg-slate-800 object-cover">
+                        <span id="userNameNav" class="text-sm font-black uppercase text-white">User</span>
+                        <div class="verified-badge"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path></svg></div>
+                    </button>
+                    <!-- Simple Logout Dropdown -->
+                    <div id="profileDropdown" class="hidden absolute right-0 mt-4 w-48 glass rounded-2xl py-2 text-center shadow-xl">
+                        <button id="openStudioBtn" class="w-full py-2 text-xs font-bold hover:bg-white/5 uppercase">3D Studio</button>
+                        <button id="logoutBtn" class="w-full py-2 text-xs font-bold text-red-500 border-t border-white/10 uppercase">Abmelden</button>
+                    </div>
+                </div>
+                <button id="navLoginBtn" class="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase shadow-lg shadow-blue-500/20">Login</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN DASHBOARD -->
+    <main class="h-screen flex flex-col items-center justify-center text-center p-6">
+        <div id="welcomeScreen">
+            <h1 class="text-6xl md:text-8xl font-black italic mb-4 uppercase">Dream <span class="text-blue-500">Cloud</span></h1>
+            <p class="text-slate-500 max-w-md mx-auto">Dein Profil ist bereit. Erstelle jetzt dein 3D-Ich für das ultimative Erlebnis.</p>
+        </div>
+
+        <!-- 3D DISPLAY (Only shown when avatar exists) -->
+        <div id="avatarContainer" class="hidden mt-10">
+            <div class="w-64 h-64 md:w-80 md:h-80 glass rounded-full overflow-hidden border-4 border-blue-500/30">
+                <model-viewer id="modelDisplay" src="" auto-rotate camera-controls style="width: 100%; height: 100%;"></model-viewer>
+            </div>
+            <button id="reEditBtn" class="mt-6 text-xs font-bold text-blue-400 uppercase tracking-widest hover:underline">Avatar bearbeiten</button>
+        </div>
+    </main>
+
+    <!-- AUTH MODAL -->
+    <div id="authModal" class="modal-hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4">
+        <div class="glass w-full max-w-md p-10 rounded-[3rem] text-center border-white/10">
+            <h2 class="text-4xl font-black mb-6 italic text-blue-500 uppercase">Login</h2>
+            <div class="space-y-4">
+                <input type="email" id="authEmail" placeholder="E-Mail" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none text-center text-white focus:border-blue-500 transition">
+                <input type="password" id="authPass" placeholder="Passwort" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none text-center text-white focus:border-blue-500 transition">
+                <button id="btnAuthAction" class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase shadow-xl">Anmelden</button>
+            </div>
+            <button id="closeAuth" class="mt-6 text-[10px] text-slate-500 font-black uppercase">Abbrechen</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-UJZGKUGRJW-8VywkoZLxd5QNUQNB1fw",
+            authDomain: "dreamora-e379a.firebaseapp.com",
+            projectId: "dreamora-e379a",
+            storageBucket: "dreamora-e379a.appspot.com",
+            messagingSenderId: "1016342666502",
+            appId: "1:1016342666502:web:8410d27cc926916f0e1287"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- CHECK FOR NEW AVATAR FROM STUDIO ---
+        const params = new URLSearchParams(window.location.search);
+        const newAvatarUrl = params.get('avatarUrl');
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Falls wir gerade vom Studio kommen
+                if (newAvatarUrl) {
+                    await setDoc(doc(db, "users", user.uid), { avatar3d: newAvatarUrl }, { merge: true });
+                    window.history.replaceState({}, document.title, window.location.pathname); // URL säubern
+                    location.reload();
+                }
+
+                // UI laden
+                document.getElementById('navLoginBtn').classList.add('hidden');
+                document.getElementById('profileSection').classList.remove('hidden');
+                document.getElementById('userNameNav').innerText = user.email.split('@')[0].toUpperCase();
+                
+                // Avatar aus Firestore holen
+                const docRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists() && docSnap.data().avatar3d) {
+                    const url = docSnap.data().avatar3d;
+                    document.getElementById('modelDisplay').src = url;
+                    document.getElementById('navAvatar').src = url.replace('.glb', '.png') + "?camera=portrait";
+                    document.getElementById('avatarContainer').classList.remove('hidden');
+                    document.getElementById('welcomeScreen').classList.add('hidden');
+                } else {
+                    document.getElementById('navAvatar').src = `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`;
+                }
+
+                if(user.email.toLowerCase() === 'hellopey@web.de') document.querySelector('.verified-badge').classList.add('show-verified');
+            } else {
+                document.getElementById('profileSection').classList.add('hidden');
+                document.getElementById('navLoginBtn').classList.remove('hidden');
+            }
+        });
+
+        // Event Listeners
+        document.getElementById('navLoginBtn').onclick = () => document.getElementById('authModal').classList.remove('modal-hidden');
+        document.getElementById('closeAuth').onclick = () => document.getElementById('authModal').classList.add('modal-hidden');
+        document.getElementById('logoutBtn').onclick = () => signOut(auth);
+        document.getElementById('profileBtn').onclick = () => document.getElementById('profileDropdown').classList.toggle('hidden');
+        document.getElementById('openStudioBtn').onclick = () => window.location.href = "studio.html";
+        document.getElementById('reEditBtn').onclick = () => window.location.href = "studio.html";
+        
+        document.getElementById('btnAuthAction').onclick = async () => {
+            const email = document.getElementById('authEmail').value;
+            const pass = document.getElementById('authPass').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                document.getElementById('authModal').classList.add('modal-hidden');
+            } catch (e) { alert("Fehler!"); }
+        };
+    </script>
+</body>
+</html>
