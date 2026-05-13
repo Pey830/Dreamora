@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Dreamora Studio | Pro 2D Designer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        body { background: #020617; color: white; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
+        .glass-panel { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(30px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .item-card { cursor: pointer; transition: 0.2s; border: 2px solid transparent; background: rgba(255,255,255,0.03); height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 15px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        .item-card.active { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .cat-btn { font-size: 20px; opacity: 0.4; transition: 0.3s; }
+        .cat-btn.active { opacity: 1; transform: scale(1.2); color: #3b82f6; }
+        input[type="color"] { border: none; width: 40px; height: 40px; cursor: pointer; background: none; }
+        #char-svg { filter: drop-shadow(0 20px 40px rgba(0,0,0,0.5)); max-height: 80vh; }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <header class="p-6 flex justify-between items-center z-50">
+        <button onclick="location.href='index.html'" class="glass-panel px-6 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-white/10 transition">Abbrechen</button>
+        <h1 class="text-xl font-black italic uppercase tracking-tighter">Avatar<span class="text-blue-500">Studio</span></h1>
+        <button id="saveBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-2xl font-black uppercase text-xs shadow-xl">Speichern</button>
+    </header>
+
+    <div class="flex-grow flex flex-col md:flex-row overflow-hidden p-6 gap-6">
+        
+        <!-- PREVIEW -->
+        <div class="flex-grow glass-panel rounded-[3rem] flex items-center justify-center relative bg-gradient-to-b from-slate-900 to-black p-10">
+            <svg id="char-svg" viewBox="0 0 200 500" xmlns="http://www.w3.org/2000/svg">
+                <!-- BODY BASE -->
+                <path id="skin-body" d="M70,180 Q100,170 130,180 L130,330 Q100,340 70,330 Z" fill="#ffdbac"/>
+                <circle id="skin-head" cx="100" cy="130" r="45" fill="#ffdbac"/>
+                
+                <!-- LEGS -->
+                <path id="leg-l" d="M75,320 L75,470 L97,470 L97,320 Z" fill="#808080"/>
+                <path id="leg-r" d="M103,320 L103,470 L125,470 L125,320 Z" fill="#808080"/>
+
+                <!-- CLOTHES TOP -->
+                <path id="top-mesh" d="" fill="#000000"/>
+                
+                <!-- ACCESSORIES -->
+                <g id="acc-mesh" fill="none" stroke-width="2"></g>
+
+                <!-- FACE -->
+                <g id="face-mesh">
+                    <circle cx="85" cy="125" r="3" fill="#000"/>
+                    <circle cx="115" cy="125" r="3" fill="#000"/>
+                    <path d="M90,145 Q100,155 110,145" stroke="#000" fill="none" stroke-width="2"/>
+                </g>
+
+                <!-- HAIR -->
+                <path id="hair-mesh" d="" fill="#222"/>
+            </svg>
+
+            <!-- COLOR PICKER FLOATING -->
+            <div class="absolute bottom-10 flex items-center gap-4 glass-panel p-4 rounded-full border-blue-500/20">
+                <span class="text-[9px] font-black uppercase opacity-50">Farbe</span>
+                <input type="color" id="mainColorPicker" value="#3b82f6">
+            </div>
+        </div>
+
+        <!-- MENU -->
+        <aside class="w-full md:w-96 flex flex-col gap-4">
+            <div class="glass-panel p-4 rounded-3xl flex justify-around">
+                <button onclick="setTab('hair')" class="cat-btn active" id="tab-hair">💇</button>
+                <button onclick="setTab('top')" class="cat-btn" id="tab-top">👕</button>
+                <button onclick="setTab('bottom')" class="cat-btn" id="tab-bottom">👖</button>
+                <button onclick="setTab('access')" class="cat-btn" id="tab-access">🕶️</button>
+                <button onclick="setTab('skin')" class="cat-btn" id="tab-skin">👤</button>
+            </div>
+            <div class="glass-panel flex-grow rounded-[2.5rem] p-6 overflow-y-auto">
+                <div id="itemGrid" class="grid grid-cols-2 gap-3"></div>
+            </div>
+        </aside>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-UJZGKUGRJW-8VywkoZLxd5QNUQNB1fw",
+            authDomain: "dreamora-e379a.firebaseapp.com",
+            projectId: "dreamora-e379a",
+            storageBucket: "dreamora-e379a.appspot.com",
+            messagingSenderId: "1016342666502",
+            appId: "1:1016342666502:web:8410d27cc926916f0e1287"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let config = { hair: 0, top: 0, bottom: 0, access: 0, skin: 0, 
+                       hairCol: '#222222', topCol: '#000000', bottomCol: '#808080', accessCol: '#ffffff', skinCol: '#ffdbac' };
+
+        const paths = {
+            hair: [
+                "M60,110 Q100,50 140,110 Z", // Short
+                "M55,130 Q55,70 100,70 Q145,70 145,130 L140,140 Q100,120 60,140 Z", // Bowl
+                "M100,80 L110,100 L90,100 Z", // Spiky
+                "M50,130 Q50,50 150,50 L150,200", // Long L
+                "M50,50 Q100,30 150,50 L140,120 Q100,100 60,120 Z", // Cap Style
+                "M80,80 Q100,40 120,80 L120,130 L80,130 Z", // Mohawk
+                "M60,90 Q100,20 140,90 L150,150 Q100,130 50,150 Z", // Messy
+                "M100,60 A40,40 0 1,1 99,60 Z", // Afro
+                "M70,80 L130,80 L130,120 L70,120 Z", // Flat
+                "M50,100 Q100,80 150,100 L140,180 L60,180 Z" // Rockstar
+            ],
+            top: [
+                "M70,180 H130 V330 H70 Z", // T-Shirt
+                "M70,180 H130 V330 H70 Z M50,185 H70 V250 H50 Z M130,185 H150 V250 H130 Z", // Shirt Sleeves
+                "M65,175 H135 V340 H65 Z M45,180 H65 V320 H45 Z M135,180 H155 V320 H135 Z", // Hoodie Large
+                "M80,180 H120 V330 H80 Z", // Tank Top
+                "M70,180 H130 V260 H70 Z", // Crop Top
+                "M65,170 H135 V350 H65 Z", // Longcoat
+                "M70,180 Q100,190 130,180 V330 Q100,340 70,330 Z", // Slim Fit
+                "M60,180 H140 V330 H60 Z", // Oversize
+                "M70,180 L130,180 L115,330 L85,330 Z", // V-Neck Style
+                "M70,180 H130 V330 L100,350 L70,330 Z" // Modern Edge
+            ],
+            bottom: [
+                "M75,320 L75,470 H97 V320 Z M103,320 L103,470 H125 V320 Z", // Straight
+                "M70,320 Q60,400 75,470 H97 Q110,400 97,320 Z M103,320 Q90,400 103,470 H125 Q140,400 130,320 Z", // BAGGY WAVY
+                "M75,320 L75,380 H97 V320 Z M103,320 L103,380 H125 V320 Z", // Shorts
+                "M75,320 L75,420 H97 V320 Z M103,320 L103,420 H125 V320 Z", // Cargo Short
+                "M70,320 L130,320 L130,400 L70,400 Z", // Skirt
+                "M75,320 L70,470 H100 V320 Z M103,320 L130,470 H100 V320 Z", // Flare
+                "M80,320 L80,470 H95 V320 Z M105,320 L105,470 H120 V320 Z", // Skinny
+                "M75,320 L75,450 H97 V320 Z M103,320 L103,450 H125 V320 Z", // 7/8 Hose
+                "M70,320 Q80,470 97,470 V320 Z M130,320 Q120,470 103,470 V320 Z", // Tapered
+                "M75,320 Q65,350 75,400 H97 V320 Z M103,320 Q113,350 103,400 H125 V320 Z" // Boxer Style
+            ]
+        };
+
+        window.setTab = (t) => {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            $(`tab-${t}`).classList.add('active');
+            const grid = $('itemGrid'); grid.innerHTML = '';
+            for(let i=0; i<10; i++) {
+                const card = document.createElement('div');
+                card.className = `item-card ${config[t] === i ? 'active' : ''}`;
+                card.innerText = `${t.toUpperCase()} ${i+1}`;
+                card.onclick = () => { config[t] = i; updatePreview(); setTab(t); };
+                grid.appendChild(card);
+            }
+        };
+
+        $('mainColorPicker').oninput = (e) => {
+            const activeTab = document.querySelector('.cat-btn.active').id.split('-')[1];
+            config[`${activeTab}Col`] = e.target.value;
+            updatePreview();
+        };
+
+        function updatePreview() {
+            $('hair-mesh').setAttribute('d', paths.hair[config.hair]);
+            $('hair-mesh').setAttribute('fill', config.hairCol);
+            $('top-mesh').setAttribute('d', paths.top[config.top]);
+            $('top-mesh').setAttribute('fill', config.topCol);
+            $('leg-l').setAttribute('d', paths.bottom[config.bottom].split(' Z ')[0] + ' Z');
+            $('leg-r').setAttribute('d', paths.bottom[config.bottom].split(' Z ')[1] ? paths.bottom[config.bottom].split(' Z ')[1] + ' Z' : '');
+            $('leg-l').setAttribute('fill', config.bottomCol);
+            $('leg-r').setAttribute('fill', config.bottomCol);
+            $('skin-head').setAttribute('fill', config.skinCol);
+            $('skin-body').setAttribute('fill', config.skinCol);
+        }
+
+        $('saveBtn').onclick = async () => {
+            const svgData = new XMLSerializer().serializeToString($('char-svg'));
+            const base64 = "data:image/svg+xml;base64," + btoa(svgData);
+            if(auth.currentUser) {
+                await setDoc(doc(db, "users", auth.currentUser.uid), { avatar2d: base64 }, { merge: true });
+                location.href = "index.html";
+            }
+        };
+
+        const $ = (id) => document.getElementById(id);
+        setTab('hair'); updatePreview();
+    </script>
+</body>
+</html>
